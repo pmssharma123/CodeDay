@@ -8,7 +8,7 @@ namespace CoDayContest.Models
 {
     public class ChargeStationDetails
     {
-        public string ChargingStationName { get; set; }
+        public string ChargingStation { get; set; }
         public int DistanceFromStart { get; set; }
     }
 }

@@ -11,6 +11,6 @@ namespace CoDayContest.Models
         public string VehicleType { get; set; }
 
         public string ChargingStation { get; set; }
-        public int TimeToCharge { get; set; }
+        public int TimeToChargePerUnit { get; set; }
     }
 }

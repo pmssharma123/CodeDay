@@ -9,6 +9,6 @@ namespace CoDayContest.Models
     public class EntryExitDetails
     {
         public string EntryExitPoint { get; set; }
-        public int Distance { get; set; }
+        public int DistanceFromStart { get; set; }
     }
 }

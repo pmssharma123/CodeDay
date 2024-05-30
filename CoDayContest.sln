@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32616.157
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CoDayContest", "CoDayContest\CoDayContest.csproj", "{F19E0F5C-DA22-48DA-BD1E-6A11A515B813}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CoDayContest.Test", "CoDayContest.Test\CoDayContest.Test.csproj", "{99884FF9-D41B-45BD-976C-5790A8732318}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F19E0F5C-DA22-48DA-BD1E-6A11A515B813}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F19E0F5C-DA22-48DA-BD1E-6A11A515B813}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F19E0F5C-DA22-48DA-BD1E-6A11A515B813}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F19E0F5C-DA22-48DA-BD1E-6A11A515B813}.Release|Any CPU.Build.0 = Release|Any CPU
+		{99884FF9-D41B-45BD-976C-5790A8732318}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{99884FF9-D41B-45BD-976C-5790A8732318}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{99884FF9-D41B-45BD-976C-5790A8732318}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{99884FF9-D41B-45BD-976C-5790A8732318}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1D0F0546-6F01-400C-A297-8E940842A091}
+	EndGlobalSection
+EndGlobal

@@ -27,51 +27,68 @@ namespace CoDayContest
             foreach (var item in tripDetailsInfo)
             {
                 var vehicleDetails = vehicleTypeInfo.FirstOrDefault(x => x.VehicleType == item.VehicleType);
-
-                var entryPoint = entryExitDetails.Where(x => x.EntryExitPoint == item.EntryPoint).FirstOrDefault();
+                
                 var exitPoint = entryExitDetails.Where(x => x.EntryExitPoint == item.ExitPoint).FirstOrDefault();
 
-                var remainingBatteryInUnits = (item.RemainingBatteryPercentage/100) * vehicleDetails.NumberOfUnitsForFullyCharge;
+                var entryPoint = entryExitDetails.Where(x => x.EntryExitPoint == item.EntryPoint).FirstOrDefault();
 
-                var distanceThatCanBeCovered = (vehicleDetails.Mileage / vehicleDetails.NumberOfUnitsForFullyCharge) * remainingBatteryInUnits;
+                //added new obj for entry exit
+                EntryExitDetails entryExitDetail = new EntryExitDetails();
+                entryExitDetail.EntryExitPoint = entryPoint.EntryExitPoint;
+                entryExitDetail.DistanceFromStart = entryPoint.DistanceFromStart;
+
+                int remainingBatteryInUnits = (item.RemainingBatteryPercentage * vehicleDetails.NumberOfUnitsForFullyCharge) / 100;
+
+
+
+                int distanceThatCanBeCovered = (vehicleDetails.Mileage * remainingBatteryInUnits) / vehicleDetails.NumberOfUnitsForFullyCharge;
 
                 var TotalDistanceCanBeCovered = entryPoint.DistanceFromStart + distanceThatCanBeCovered;
+                double KmsPerUnit = vehicleDetails.Mileage / vehicleDetails.NumberOfUnitsForFullyCharge;
 
-              //  if(TotalDistanceCanBeCovered <= exitPoint.DistanceFromStart)   last station
+                //  if(TotalDistanceCanBeCovered <= exitPoint.DistanceFromStart)   last station
 
 
-
-                var NearestChargingPoint = chargeStationDetails.Where(x => x.DistanceFromStart >= entryPoint.DistanceFromStart && x.DistanceFromStart <= TotalDistanceCanBeCovered).LastOrDefault();
-
-                var DistanceSaved= TotalDistanceCanBeCovered - NearestChargingPoint.DistanceFromStart;
-
-                var KmsPerUnit = vehicleDetails.Mileage / vehicleDetails.NumberOfUnitsForFullyCharge;
-
-                var unitsSaved = DistanceSaved / KmsPerUnit;
-
-                var timeToCharge = timeToChargeDetails.Where(x => x.VehicleType == item.VehicleType && x.ChargingStation == NearestChargingPoint.ChargingStation).FirstOrDefault();
-
-                var TotalTimeToCharge = (vehicleDetails.NumberOfUnitsForFullyCharge - unitsSaved) * timeToCharge.TimeToChargePerUnit; 
-                
-                var TotalEnergyConsumed = vehicleDetails.NumberOfUnitsForFullyCharge;  // this can change
-
-                if(!con.ConsumptionDetails.Exists(x => x.VehicleType == vehicleDetails.VehicleType))
+                do
                 {
-                    con.ConsumptionDetails.Add(new ConsumptionDetails
+                    var NearestChargingPoint = chargeStationDetails.Where(x => x.DistanceFromStart >= entryExitDetail.DistanceFromStart && x.DistanceFromStart <= TotalDistanceCanBeCovered).LastOrDefault();
+
+                    double DistanceRemained = TotalDistanceCanBeCovered - NearestChargingPoint.DistanceFromStart;
+
+                    double unitsSaved = (double)(DistanceRemained / KmsPerUnit);
+
+                    var timeToCharge = timeToChargeDetails.Where(x => x.VehicleType == item.VehicleType && x.ChargingStation == NearestChargingPoint.ChargingStation).FirstOrDefault();
+
+                    var TotalTimeToCharge = (vehicleDetails.NumberOfUnitsForFullyCharge - unitsSaved) * timeToCharge.TimeToChargePerUnit;
+
+                    var TotalEnergyConsumed = remainingBatteryInUnits - unitsSaved;
+
+                    if (!con.ConsumptionDetails.Exists(x => x.VehicleType == vehicleDetails.VehicleType))
                     {
-                        VehicleType = vehicleDetails.VehicleType,
-                        TotalTimeRequired= TotalTimeToCharge,
-                        TotalUnitConsumed = vehicleDetails.NumberOfUnitsForFullyCharge,
-                        NumberOfTripsFinished = 1
-                    });
+                        con.ConsumptionDetails.Add(new ConsumptionDetails
+                        {
+                            VehicleType = vehicleDetails.VehicleType,
+                            TotalTimeRequired = (long)TotalTimeToCharge,
+                            TotalUnitConsumed = TotalEnergyConsumed,
+                            NumberOfTripsFinished = exitPoint.EntryExitPoint == entryExitDetail.EntryExitPoint ? 1 : 0
+                        });
+                    }
+                    else
+                    {
+                        var ConsumptionDetails = con.ConsumptionDetails.First(x => x.VehicleType == vehicleDetails.VehicleType);
+                        ConsumptionDetails.TotalTimeRequired += (long)TotalTimeToCharge;
+                        ConsumptionDetails.TotalUnitConsumed += TotalEnergyConsumed;
+                        ConsumptionDetails.NumberOfTripsFinished += exitPoint.EntryExitPoint == entryExitDetail.EntryExitPoint ? 1 : 0;
+                    }
+
+                    TotalDistanceCanBeCovered = vehicleDetails.Mileage + NearestChargingPoint.DistanceFromStart;
+                    var currentEntryPoint = entryExitDetails.Where(x => x.DistanceFromStart <= TotalDistanceCanBeCovered && x.DistanceFromStart <= exitPoint.DistanceFromStart).LastOrDefault();
+                    entryExitDetail.DistanceFromStart = NearestChargingPoint.DistanceFromStart;
+                    entryExitDetail.EntryExitPoint = currentEntryPoint.EntryExitPoint;
+                    remainingBatteryInUnits = vehicleDetails.NumberOfUnitsForFullyCharge;
+                    
                 }
-                else
-                {
-                    var ConsumptionDetails = con.ConsumptionDetails.First(x => x.VehicleType == vehicleDetails.VehicleType);
-                    ConsumptionDetails.TotalTimeRequired += TotalTimeToCharge;
-                    ConsumptionDetails.TotalUnitConsumed += TotalEnergyConsumed;
-                    ConsumptionDetails.NumberOfTripsFinished += 1;
-                }   
+                while (exitPoint.EntryExitPoint != entryExitDetail.EntryExitPoint);
 
             }
 

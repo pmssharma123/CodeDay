@@ -7,120 +7,147 @@ namespace CoDayContest
 {
     public class ElectricityConsumptionCalculatorImpl : IElectricityComsumptionCalculator
     {
-        List<ChargeStationDetails>? chargeStationDetails = null;
-        List<TripDetails>? tripDetailsInfo = null;
-        List<EntryExitDetails>? entryExitDetails = null;
-        List<VehicleTypeInfo>? vehicleTypeInfo = null;
-        List<TimeToChargeDetails>? timeToChargeDetails = null;
+        IEnumerable<ChargeStationDetails>? chargeStationDetails = null;
+        IEnumerable<TripDetails>? tripDetailsInfo = null;
+        IEnumerable<EntryExitDetails>? entryExitDetails = null;
+        IEnumerable<VehicleTypeInfo>? vehicleTypeInfo = null;
+        IEnumerable<TimeToChargeDetails>? timeToChargeDetails = null;
+        
 
-
-        public ConsumptionResult CalculateElectricityAndTimeComsumption(ResourcesInfo resourcesInfo)
+        public async Task<ConsumptionResult> CalculateElectricityAndTimeComsumption(ResourcesInfo resourcesInfo)
         {
-            ConsumptionResult con = new ConsumptionResult();
-
-            chargeStationDetails = ReadCSV<ChargeStationDetails>(resourcesInfo.ChargingStationInfoFilePath);
-            tripDetailsInfo = ReadCSV<TripDetails>(resourcesInfo.TripDetailsFilePath);
-            entryExitDetails = ReadCSV<EntryExitDetails>(resourcesInfo.EntryExitPointInfoFilePath);
-            vehicleTypeInfo = ReadCSV<VehicleTypeInfo>(resourcesInfo.VehicleTypeInfoFilePath);
-            timeToChargeDetails = ReadCSV<TimeToChargeDetails>(resourcesInfo.TimeToChargeVehicleInfoFilePath);
-
-            foreach (var item in tripDetailsInfo)
+            ConsumptionResult con = new ();
+            try
             {
-                var vehicleDetails = vehicleTypeInfo.FirstOrDefault(x => x.VehicleType == item.VehicleType);
-                
-                var exitPoint = entryExitDetails.Where(x => x.EntryExitPoint == item.ExitPoint).FirstOrDefault();
+                chargeStationDetails = await readCSV<ChargeStationDetails>(resourcesInfo.ChargingStationInfoFilePath);
+                tripDetailsInfo = await readCSV<TripDetails>(resourcesInfo.TripDetailsFilePath);
+                entryExitDetails = await readCSV<EntryExitDetails>(resourcesInfo.EntryExitPointInfoFilePath);
+                vehicleTypeInfo = await readCSV<VehicleTypeInfo>(resourcesInfo.VehicleTypeInfoFilePath);
+                timeToChargeDetails = await readCSV<TimeToChargeDetails>(resourcesInfo.TimeToChargeVehicleInfoFilePath);
 
-                var entryPoint = entryExitDetails.Where(x => x.EntryExitPoint == item.EntryPoint).FirstOrDefault();
-
-                //added new obj for entry exit
-                EntryExitDetails entryExitDetail = new()
+                foreach (var item in tripDetailsInfo)
                 {
-                    EntryExitPoint = entryPoint.EntryExitPoint,
-                    DistanceFromStart = entryPoint.DistanceFromStart
-                };
+                    var vehicleDetails = vehicleTypeInfo.FirstOrDefault(x => x.VehicleType == item.VehicleType);
 
-                float remainingBatteryInUnits = (item.RemainingBatteryPercentage * vehicleDetails.NumberOfUnitsForFullyCharge) / 100;
-                float distanceThatCanBeCovered = (vehicleDetails.Mileage * remainingBatteryInUnits) / vehicleDetails.NumberOfUnitsForFullyCharge;
+                    var exitPoint = entryExitDetails.Where(x => x.EntryExitPoint == item.ExitPoint).FirstOrDefault();
 
-                var TotalDistanceCanBeCovered = entryPoint.DistanceFromStart + distanceThatCanBeCovered;
-                double KmsPerUnit = Math.Round(vehicleDetails.Mileage / vehicleDetails.NumberOfUnitsForFullyCharge,1);
+                    var entryPoint = entryExitDetails.Where(x => x.EntryExitPoint == item.EntryPoint).FirstOrDefault();
 
-                do
-                {
-                    var nextEntryPoint = entryExitDetails.Where(x => x.DistanceFromStart <= TotalDistanceCanBeCovered && x.DistanceFromStart <= exitPoint.DistanceFromStart).LastOrDefault();
-
-                    var NearestChargingPoint = chargeStationDetails.Where(x => x.DistanceFromStart >= entryExitDetail.DistanceFromStart && x.DistanceFromStart <= TotalDistanceCanBeCovered).LastOrDefault();
-
-                    double DistanceRemained = TotalDistanceCanBeCovered - NearestChargingPoint.DistanceFromStart;
-
-                    var timeToCharge = timeToChargeDetails.Where(x => x.VehicleType == item.VehicleType && x.ChargingStation == NearestChargingPoint.ChargingStation).FirstOrDefault();
-
-                    double unitsSaved = Math.Round(DistanceRemained / KmsPerUnit,1);
-
-                    var TotalTimeToCharge = (vehicleDetails.NumberOfUnitsForFullyCharge - unitsSaved) * timeToCharge.TimeToChargePerUnit;
-
-                    var TotalEnergyConsumed = Math.Round(remainingBatteryInUnits - unitsSaved,1);
-                    var tripsFinished = 0;
-
-                    if (nextEntryPoint.EntryExitPoint == exitPoint.EntryExitPoint || TotalDistanceCanBeCovered >= exitPoint.DistanceFromStart)
+                    //added new obj for entry exit
+                    EntryExitDetails entryExitDetail = new()
                     {
-                        DistanceRemained = TotalDistanceCanBeCovered - exitPoint.DistanceFromStart;
-                        unitsSaved = Math.Round(DistanceRemained / KmsPerUnit);
-                        TotalTimeToCharge = 0;
-                        TotalEnergyConsumed = remainingBatteryInUnits - unitsSaved;
-                        tripsFinished = 1;
-                    }
+                        EntryExitPoint = entryPoint.EntryExitPoint,
+                        DistanceFromStart = entryPoint.DistanceFromStart
+                    };
 
-                    if (!con.ConsumptionDetails.Exists(x => x.VehicleType == vehicleDetails.VehicleType))
+                    int remainingBatteryInUnits = (item.RemainingBatteryPercentage * vehicleDetails.NumberOfUnitsForFullyCharge) / 100;
+                    int distanceThatCanBeCovered = (vehicleDetails.Mileage * remainingBatteryInUnits) / vehicleDetails.NumberOfUnitsForFullyCharge;
+
+                    var TotalDistanceCanBeCovered = entryPoint.DistanceFromStart + distanceThatCanBeCovered;
+                    int KmsPerUnit = vehicleDetails.Mileage / vehicleDetails.NumberOfUnitsForFullyCharge;
+
+                    do
                     {
-                        con.ConsumptionDetails.Add(new ConsumptionDetails
+                        int distanceRemained;
+                        int unitsSaved;
+                        int totalTimeToCharge;
+                        int totalEnergyConsumed;
+                        int tripsFinished = 0;
+                        var nextEntryPoint = entryExitDetails.Where(x => x.DistanceFromStart <= TotalDistanceCanBeCovered && x.DistanceFromStart <= exitPoint.DistanceFromStart).LastOrDefault();
+
+                        var NearestChargingPoint = chargeStationDetails!.Where(x => x.DistanceFromStart >= entryExitDetail.DistanceFromStart && x.DistanceFromStart <= TotalDistanceCanBeCovered).LastOrDefault();
+
+                        if (nextEntryPoint.EntryExitPoint == exitPoint.EntryExitPoint || TotalDistanceCanBeCovered >= exitPoint.DistanceFromStart)
                         {
-                            VehicleType = vehicleDetails.VehicleType,
-                            TotalTimeRequired = (long)TotalTimeToCharge,
-                            TotalUnitConsumed = TotalEnergyConsumed,
-                            NumberOfTripsFinished = tripsFinished
-                        });                     
-                    }
-                    else
-                    {
-                        var ConsumptionDetails = con.ConsumptionDetails.First(x => x.VehicleType == vehicleDetails.VehicleType);
-                        ConsumptionDetails.TotalTimeRequired += (long)TotalTimeToCharge;
-                        ConsumptionDetails.TotalUnitConsumed += TotalEnergyConsumed;
-                        ConsumptionDetails.NumberOfTripsFinished += tripsFinished;
-                    }
+                            distanceRemained = TotalDistanceCanBeCovered - exitPoint.DistanceFromStart;
+                            unitsSaved = distanceRemained / KmsPerUnit;
+                            totalTimeToCharge = 0;
+                            totalEnergyConsumed = remainingBatteryInUnits - unitsSaved;
+                            tripsFinished = 1;
+                        }
+                        else if(NearestChargingPoint == null)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            distanceRemained = TotalDistanceCanBeCovered - NearestChargingPoint.DistanceFromStart;
+
+                            var timeToCharge = timeToChargeDetails.Where(x => x.VehicleType == item.VehicleType && x.ChargingStation == NearestChargingPoint.ChargingStation).FirstOrDefault();
+
+                            unitsSaved = distanceRemained / KmsPerUnit;
+
+                            totalTimeToCharge = (vehicleDetails.NumberOfUnitsForFullyCharge - unitsSaved) * timeToCharge.TimeToChargePerUnit;
+
+                            totalEnergyConsumed = remainingBatteryInUnits - unitsSaved;
+                        }
 
 
-                    if(!con.TotalChargingStationTime.ContainsKey(NearestChargingPoint.ChargingStation))
-                    {
-                        con.TotalChargingStationTime.Add(NearestChargingPoint.ChargingStation, (long)TotalTimeToCharge);
-                    }
-                    else
-                    {
-                        con.TotalChargingStationTime[NearestChargingPoint.ChargingStation] += (long)TotalTimeToCharge;
-                    }
+                        if (!con.ConsumptionDetails.Exists(x => x.VehicleType == vehicleDetails.VehicleType))
+                        {
+                            con.ConsumptionDetails.Add(new ConsumptionDetails
+                            {
+                                VehicleType = vehicleDetails.VehicleType,
+                                TotalTimeRequired = totalTimeToCharge,
+                                TotalUnitConsumed = totalEnergyConsumed,
+                                NumberOfTripsFinished = tripsFinished
+                            });
+                        }
+                        else
+                        {
+                            var ConsumptionDetails = con.ConsumptionDetails.First(x => x.VehicleType == vehicleDetails.VehicleType);
+                            ConsumptionDetails.TotalTimeRequired += totalTimeToCharge;
+                            ConsumptionDetails.TotalUnitConsumed += totalEnergyConsumed;
+                            ConsumptionDetails.NumberOfTripsFinished += tripsFinished;
+                        }
 
-                    TotalDistanceCanBeCovered = vehicleDetails.Mileage + NearestChargingPoint.DistanceFromStart;            
-                    entryExitDetail.DistanceFromStart = NearestChargingPoint.DistanceFromStart;
-                    entryExitDetail.EntryExitPoint = nextEntryPoint.EntryExitPoint;
-                    remainingBatteryInUnits = vehicleDetails.NumberOfUnitsForFullyCharge;
-                    
+                        if (NearestChargingPoint != null)
+                        {
+                            if (!con.TotalChargingStationTime.ContainsKey(NearestChargingPoint.ChargingStation))
+                            {
+                                con.TotalChargingStationTime.Add(NearestChargingPoint.ChargingStation, (long)totalTimeToCharge);
+                            }
+                            else
+                            {
+                                con.TotalChargingStationTime[NearestChargingPoint.ChargingStation] += (long)totalTimeToCharge;
+                            }
+
+                        }
+                        TotalDistanceCanBeCovered = vehicleDetails.Mileage + NearestChargingPoint.DistanceFromStart;
+                        entryExitDetail.DistanceFromStart = NearestChargingPoint.DistanceFromStart;
+                        entryExitDetail.EntryExitPoint = nextEntryPoint.EntryExitPoint;
+                        remainingBatteryInUnits = vehicleDetails.NumberOfUnitsForFullyCharge;
+
+                    }
+                    while (exitPoint.EntryExitPoint != entryExitDetail.EntryExitPoint);
+
                 }
-                while (exitPoint.EntryExitPoint != entryExitDetail.EntryExitPoint);
-
             }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }   
 
             return con;
         }
 
-        List<T>? ReadCSV<T>(string filePath)
+        private async Task<List<T>> readCSV<T>(string filePath)
         {
-            using (var reader = new StreamReader(filePath))
-            using (var csv = new CsvReader(reader, System.Globalization.CultureInfo.InvariantCulture))
+            try
             {
-                var records = csv.GetRecords<T>();
-                List<T> list = records.ToList();
-                return list;
+                using (var reader = new StreamReader(filePath))
+                using (var csv = new CsvReader(reader, System.Globalization.CultureInfo.InvariantCulture))
+                {
+                    var records = csv.GetRecords<T>();
+                    List<T> list = records.ToList();
+                    return list;
+                }
             }
+            catch (CsvHelperException ex)
+            {
+                Console.WriteLine(ex.Message);
+                return null;
+            }   
         }
 
     }

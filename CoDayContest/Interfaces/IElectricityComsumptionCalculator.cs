@@ -4,6 +4,6 @@ namespace CoDayContest.Interfaces
 {
     public interface IElectricityComsumptionCalculator
     {
-        ConsumptionResult CalculateElectricityAndTimeComsumption(ResourcesInfo resourcesInfo);
+       Task<ConsumptionResult> CalculateElectricityAndTimeComsumption(ResourcesInfo resourcesInfo);
     }
 }

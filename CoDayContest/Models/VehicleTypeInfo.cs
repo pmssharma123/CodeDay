@@ -9,7 +9,7 @@ namespace CoDayContest.Models
     public class VehicleTypeInfo
     {
         public string VehicleType { get; set; }
-        public int NumberOfUnitsForFullyCharge { get; set; }
-        public int Mileage { get; set; }
+        public float NumberOfUnitsForFullyCharge { get; set; }
+        public float Mileage { get; set; }
     }
 }

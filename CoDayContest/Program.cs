@@ -15,7 +15,7 @@ namespace CoDayContest
             resourcesInfo.VehicleTypeInfoFilePath = "C:\\Users\\jgujar\\Downloads\\CodersDuo_DotNet\\CoDayContest\\Resources\\TestCase1\\VehicleTypeInfo.csv";
 
             IElectricityComsumptionCalculator electricityComsumptionCalculator = new ElectricityConsumptionCalculatorImpl();
-            ConsumptionResult consumptionResult = electricityComsumptionCalculator.CalculateElectricityAndTimeComsumption(resourcesInfo);
+            //ConsumptionResult consumptionResult = electricityComsumptionCalculator.CalculateElectricityAndTimeComsumption(resourcesInfo);
             
         }
     }
